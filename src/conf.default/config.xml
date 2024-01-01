@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<pfsense>
+<ahool>
 	<version>22.2</version>
 	<lastchange></lastchange>
 	<system>
 		<optimization>normal</optimization>
-		<hostname>pfSense</hostname>
-		<domain>home.arpa</domain>
+		<hostname>ahool</hostname>
+		<domain>.com</domain>
 		<dnsserver></dnsserver>
 		<dnsallowoverride></dnsallowoverride>
 		<group>
@@ -34,7 +34,7 @@
 		</user>
 		<nextuid>2000</nextuid>
 		<nextgid>2000</nextgid>
-		<timeservers>2.pfsense.pool.ntp.org</timeservers>
+		<timeservers>2.ahool.pool.ntp.org</timeservers>
 		<webgui>
 			<protocol>https</protocol>
 			<loginautocomplete></loginautocomplete>
@@ -270,4 +270,4 @@
 	</vlans>
 	<qinqs>
 	</qinqs>
-</pfsense>
+</ahool>

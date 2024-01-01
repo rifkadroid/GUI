@@ -106,12 +106,14 @@ j="-j${njobs}"
 
 [ -z "${skip_world}" ] \
 	&& run "Building world" \
-		"make -C ${srcdir} -s ${j} buildworld"
+		"make -C ${srcdir} -s ${j} WERROR=-Wno-bitfield-constant-conversion buildworld"
 
 if [ -z "${skip_kernel}" ]; then
-	for kernel in ${KERNCONF:-pfSense}; do
+	for kernel in ${KERNCONF:-ahool}; do
+			echo "Kernel ${kernel} - Starting building process"
 		run "Building kernel (${kernel})" \
-			"make -C ${srcdir} -s ${j} KERNCONF=${kernel} buildkernel"
+			"make -C ${srcdir} -s ${j} KERNCONF=${kernel} WERROR=-Wno-bitfield-constant-conversion buildkernel"
+			echo "Kernel ${kernel} building process completed!"
 	done
 fi
 

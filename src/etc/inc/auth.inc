@@ -155,7 +155,7 @@ if (function_exists("display_error_form") && !config_path_enabled('system/webgui
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<link rel="stylesheet" href="/css/pfSense.css" />
+	<link rel="stylesheet" href="/css/ahool.css" />
 	<title><?=gettext("Redirecting..."); ?></title>
 </head>
 <body id="error" class="no-menu">
@@ -2229,11 +2229,9 @@ function session_auth() {
 function print_credit() {
 	global $g;
 
-	return  '<a target="_blank" href="https://pfsense.org">' . g_get('product_label') . '</a>' .
+	return  '<a target="_blank" href="https://ahool.com">' . g_get('product_label') . '</a>' .
 			gettext(' is developed and maintained by ') .
-			'<a target="_blank" href="https://netgate.com">Netgate. </a>' . ' &copy; ESF ' . g_get('product_copyright_years') .
-			'<a target="_blank" href="https://pfsense.org/license">' .
-			gettext(' View license.') . '</a>';
+			'<a target="_blank" href="https://tis.com">TIS</a>' . ' &copy; ';
 }
 function get_user_remote_address($print_all=true) {
 	$remote_address = $_SERVER['REMOTE_ADDR'];

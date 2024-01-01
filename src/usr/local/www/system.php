@@ -519,7 +519,7 @@ $section->addInput(new Form_Input(
 	'*Hostname',
 	'text',
 	$pconfig['hostname'],
-	['placeholder' => 'pfSense']
+	['placeholder' => 'ahool']
 ))->setHelp('Name of the firewall host, without domain part.');
 
 $section->addInput(new Form_Input(
@@ -740,7 +740,7 @@ $csswarning = sprintf(gettext("%sUser-created themes are unsupported, use at you
 events.push(function() {
 
 	function setThemeWarning() {
-		if ($('#webguicss').val().startsWith("pfSense")) {
+		if ($('#webguicss').val().startsWith("ahool")) {
 			$('#csstxt').html("").addClass("text-default");
 		} else {
 			$('#csstxt').html("<?=$csswarning?>").addClass("text-danger");

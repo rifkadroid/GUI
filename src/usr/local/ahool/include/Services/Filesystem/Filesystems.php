@@ -19,9 +19,9 @@
  * limitations under the License.
  */
 
-namespace pfSense\Services\Filesystem;
+namespace ahool\Services\Filesystem;
 
-use pfSense\Services\Filesystem\Provider\{
+use ahool\Services\Filesystem\Provider\{
 	AbstractProvider,
 	SystemProvider
 };

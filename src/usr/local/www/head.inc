@@ -38,7 +38,7 @@ if ($user_settings['webgui']['pagenamefirst']) {
 	$tabtitle = htmlspecialchars($system_url) . " - " . $pagetitle;
 }
 
-$cssfile = "/css/pfSense.css";
+$cssfile = "/css/ahool.css";
 
 if (isset($user_settings['webgui']['webguicss'])) {
 	if (file_exists("/usr/local/www/css/" . $user_settings['webgui']['webguicss'])) {
@@ -307,26 +307,26 @@ $interfaces_menu = array_merge($interfaces_top, [array(0 => "-DIVIDER-")], $inte
 
 // Firewall
 $firewall_menu = array();
-$firewall_menu[] = array(gettext("Aliases"), "/firewall_aliases.php");
+$firewall_menu[] = array(gettext("Alias"), "/firewall_aliases.php");
 $firewall_menu[] = array(gettext("NAT"), "/firewall_nat.php");
-$firewall_menu[] = array(gettext("Rules"), "/firewall_rules.php");
-$firewall_menu[] = array(gettext("Schedules"), "/firewall_schedule.php");
-$firewall_menu[] = array(gettext("Traffic Shaper"), "/firewall_shaper.php");
-$firewall_menu[] = array(gettext("Virtual IPs"), "/firewall_virtual_ip.php");
+$firewall_menu[] = array(gettext("Aturan"), "/firewall_rules.php");
+$firewall_menu[] = array(gettext("Jadwal"), "/firewall_schedule.php");
+$firewall_menu[] = array(gettext("Pembentuk Lalu Lintas"), "/firewall_shaper.php");
+$firewall_menu[] = array(gettext("IP virtual"), "/firewall_virtual_ip.php");
 $firewall_menu = msort(array_merge($firewall_menu, return_ext_menu("Firewall")), 0);
 
 // Services
 $services_menu = array();
-$services_menu[] = array(gettext("Auto Config Backup"), "/services_acb_settings.php");
-$services_menu[] = array(gettext("Captive Portal"), "/services_captiveportal.php");
-$services_menu[] = array(gettext("DNS Forwarder"), "/services_dnsmasq.php");
-$services_menu[] = array(gettext("DNS Resolver"), "/services_unbound.php");
-$services_menu[] = array(gettext("DHCP Relay"), "/services_dhcp_relay.php");
-$services_menu[] = array(gettext("DHCPv6 Relay"), "/services_dhcpv6_relay.php");
+$services_menu[] = array(gettext("Pencadangan Konfigurasi Otomatis"), "/services_acb_settings.php");
+$services_menu[] = array(gettext("Portal Tawanan"), "/services_captiveportal.php");
+$services_menu[] = array(gettext("DNS Ekspeditur"), "/services_dnsmasq.php");
+$services_menu[] = array(gettext("DNS Penyelesai"), "/services_unbound.php");
+$services_menu[] = array(gettext("DHCP Menyampaikan"), "/services_dhcp_relay.php");
+$services_menu[] = array(gettext("DHCPv6 Menyampaikan"), "/services_dhcpv6_relay.php");
 
 if (g_get('services_dhcp_server_enable')) {
 	$services_menu[] = array(gettext("DHCP Server"), "/services_dhcp.php");
-	$services_menu[] = array(htmlspecialchars(gettext("DHCPv6 Server & RA")), "/services_dhcpv6.php");
+	$services_menu[] = array(htmlspecialchars(gettext("DHCPv6 Server")), "/services_dhcpv6.php");
 }
 
 $services_menu[] = array(gettext("Dynamic DNS"), "/services_dyndns.php");
@@ -355,13 +355,13 @@ $vpn_menu = msort(array_merge($vpn_menu, return_ext_menu("VPN")), 0);
 
 // Status
 $status_menu = array();
-$status_menu[] = array(gettext("Captive Portal"), "/status_captiveportal.php");
+$status_menu[] = array(gettext("Portal Tawanan"), "/status_captiveportal.php");
 $status_menu[] = array(gettext("CARP (failover)"), "/status_carp.php");
-$status_menu[] = array(gettext("Dashboard"), "/index.php");
+$status_menu[] = array(gettext("Dasbor"), "/index.php");
 $status_menu[] = array(gettext("Gateways"), "/status_gateways.php");
 $status_menu[] = array(gettext("DHCP Leases"), "/status_dhcp_leases.php");
 $status_menu[] = array(gettext("DHCPv6 Leases"), "/status_dhcpv6_leases.php");
-$status_menu[] = array(gettext("DNS Resolver"), "/status_unbound.php");
+$status_menu[] = array(gettext("DNS Penyelesai"), "/status_unbound.php");
 $status_menu[] = array(gettext("Filter Reload"), "/status_filter_reload.php?user=true");
 $status_menu[] = array(gettext("Interfaces"), "/status_interfaces.php");
 $status_menu[] = array(gettext("IPsec"), "/status_ipsec.php");
@@ -369,7 +369,7 @@ $status_menu[] = array(gettext("NTP"), "/status_ntpd.php");
 $status_menu[] = array(gettext("OpenVPN"), "/status_openvpn.php");
 $status_menu[] = array(gettext("Queues"), "/status_queues.php");
 $status_menu[] = array(gettext("Services"), "/status_services.php");
-$status_menu[] = array(gettext("System Logs"), "/status_logs.php");
+$status_menu[] = array(gettext("Sistem Log"), "/status_logs.php");
 $status_menu[] = array(gettext("Traffic Graph"), "/status_graph.php");
 
 if (count($config['interfaces']) > 1) {
@@ -398,50 +398,37 @@ $diagnostics_menu[] = array(gettext("Authentication"), "/diag_authentication.php
 $diagnostics_menu[] = array(htmlspecialchars(gettext("Backup & Restore")), "/diag_backup.php");
 $diagnostics_menu[] = array(gettext("Command Prompt"), "/diag_command.php");
 $diagnostics_menu[] = array(gettext("DNS Lookup"), "/diag_dns.php");
-$diagnostics_menu[] = array(gettext("Edit File"), "/diag_edit.php");
-$diagnostics_menu[] = array(gettext("Factory Defaults"), "/diag_defaults.php");
+$diagnostics_menu[] = array(gettext("Sunting Berkas"), "/diag_edit.php");
+$diagnostics_menu[] = array(gettext("Layanan Default Pabrik"), "/diag_defaults.php");
 
 if (file_exists("/var/run/gmirror_active")) {
 	$diagnostics_menu[] = array(gettext("GEOM Mirrors"), "/diag_gmirror.php");
 }
 
-$diagnostics_menu[] = array(gettext("Halt System"), "/diag_halt.php");
-$diagnostics_menu[] = array(gettext("Limiter Info"), "/diag_limiter_info.php");
+$diagnostics_menu[] = array(gettext("Hentikan sistem"), "/diag_halt.php");
+$diagnostics_menu[] = array(gettext("Info Pembatas"), "/diag_limiter_info.php");
 $diagnostics_menu[] = array(gettext("NDP Table"), "/diag_ndp.php");
 $diagnostics_menu[] = array(gettext("Tables"), "/diag_tables.php");
 $diagnostics_menu[] = array(gettext("Ping"), "/diag_ping.php");
 $diagnostics_menu[] = array(gettext("Test Port"), "/diag_testport.php");
-$diagnostics_menu[] = array(gettext("pfInfo"), "/diag_pf_info.php");
-$diagnostics_menu[] = array(gettext("pfTop"), "/diag_pftop.php");
-$diagnostics_menu[] = array(gettext("Reboot"), "/diag_reboot.php");
-$diagnostics_menu[] = array(gettext("Routes"), "/diag_routes.php");
+$diagnostics_menu[] = array(gettext("Ahool Info"), "/diag_pf_info.php");
+$diagnostics_menu[] = array(gettext("Ahool Top"), "/diag_pftop.php");
+$diagnostics_menu[] = array(gettext("Menyalakan ulang"), "/diag_reboot.php");
+$diagnostics_menu[] = array(gettext("Rute"), "/diag_routes.php");
 $diagnostics_menu[] = array(gettext("S.M.A.R.T. Status"), "/diag_smart.php");
 $diagnostics_menu[] = array(gettext("Sockets"), "/diag_sockets.php");
 $diagnostics_menu[] = array(gettext("States"), "/diag_dump_states.php");
-$diagnostics_menu[] = array(gettext("States Summary"), "/diag_states_summary.php");
-$diagnostics_menu[] = array(gettext("System Activity"), "/diag_system_activity.php");
+$diagnostics_menu[] = array(gettext("Ringkasan States"), "/diag_states_summary.php");
+$diagnostics_menu[] = array(gettext("Aktivitas Sistem"), "/diag_system_activity.php");
 $diagnostics_menu[] = array(gettext("Traceroute"), "/diag_traceroute.php");
-$diagnostics_menu[] = array(gettext("Packet Capture"), "/diag_packet_capture.php");
+$diagnostics_menu[] = array(gettext("Pengambilan Paket"), "/diag_packet_capture.php");
 
 $diagnostics_menu = msort(array_merge($diagnostics_menu, return_ext_menu("Diagnostics")), 0);
 
 if (!g_get('disablehelpmenu')) {
 	$help_menu = array();
-	$help_menu[] = array(gettext("About this Page"), $helpurl);
-	if (g_get('product_name') == "pfSense") {
-		$help_menu[] = array(gettext("Bug Database"), "https://redirects.netgate.com/issues");
-	}
-
-	$help_menu[] = array(gettext("User Forum"), "https://redirects.netgate.com/forum");
-	$help_menu[] = array(gettext("Documentation"), "https://redirects.netgate.com/docs");
-	$help_menu[] = array(gettext("Paid Support"), "https://redirects.netgate.com/support");
-	$help_menu[] = array(gettext("pfSense Book"), "https://redirects.netgate.com/book");
-	$help_menu[] = array(gettext("FreeBSD Handbook"), "https://redirects.netgate.com/fbsdhandbook");
-	$help_menu[] = array(gettext("User survey"), "https://redirects.netgate.com/survey_1");
-	if  (strpos(g_get('product_label'), 'Plus') === false) {
-		$help_menu[] = array(gettext("Upgrade to pfSense Plus"), "https://redirects.netgate.com/upgrade");
-	}
-	$help_menu = msort(array_merge($help_menu, return_ext_menu("Help")), 0);
+	$help_menu[] = array(gettext("Tentang"), "https://ahool-firewall.tis.com");
+	$help_menu[] = array(gettext("Bug Database"), "https://ahool-firewall.tis.com/issues");
 }
 
 $menuclass = "static";
@@ -482,7 +469,6 @@ if (are_notices_pending()) {
 			</button>
 			<a class="navbar-brand" href="/">
 				<?php include("/usr/local/www/logo.svg"); ?>
-				<span style="color:white;font-size:.5em;text-transform:uppercase;letter-spacing:1px;">Community Edition</span>
 			</a>
 		</div>
 		<div class="collapse navbar-collapse" id="pf-navbar">
@@ -498,13 +484,13 @@ if (are_notices_pending()) {
                     $help_menu_title = 'Help';
                 }
                 foreach ([
-					['name' => 'System',	     'menu' => $system_menu,	  'href' => null],
-					['name' => 'Interfaces',     'menu' => $interfaces_menu,  'href' => null],
+					['name' => 'Sistem',	     'menu' => $system_menu,	  'href' => null],
+					['name' => 'Antarmuka',     'menu' => $interfaces_menu,  'href' => null],
 					['name' => 'Firewall',	     'menu' => $firewall_menu,	  'href' => null],
-					['name' => 'Services',	     'menu' => $services_menu,	  'href' => null],
+					['name' => 'Layanan',	     'menu' => $services_menu,	  'href' => null],
 					['name' => 'VPN',		     'menu' => $vpn_menu,		  'href' => null],
 					['name' => 'Status',	     'menu' => $status_menu,	  'href' => null],
-					['name' => 'Diagnostics',    'menu' => $diagnostics_menu, 'href' => null],
+					['name' => 'Diagnostik',    'menu' => $diagnostics_menu, 'href' => null],
                     ['name' => $help_menu_title, 'menu' => $help_menu,		  'href' => '_blank']
 				] as $item):
 					if ($item['name'] == 'Help' && g_get('disablehelpmenu')) {

@@ -5,7 +5,7 @@
 # part of pfSense (https://www.pfsense.org)
 # Copyright (c) 2004-2013 BSD Perimeter
 # Copyright (c) 2013-2016 Electric Sheep Fencing
-# Copyright (c) 2014-2023 Rubicon Communications, LLC (Netgate)
+# Copyright (c) 2014-2022 Rubicon Communications, LLC (Netgate)
 # All rights reserved.
 #
 # FreeSBIE portions of the code
@@ -68,7 +68,7 @@ core_pkg_create_repo() {
 	# breaking snapshot repositories during rsync
 	ln -sf $(basename ${CORE_PKG_REAL_PATH}) ${CORE_PKG_PATH}/.latest
 	ln -sf .latest/All ${CORE_PKG_ALL_PATH}
-	ln -sf .latest/digests.txz ${CORE_PKG_PATH}/digests.txz
+	#ln -sf .latest/digests.txz ${CORE_PKG_PATH}/digests.txz
 	ln -sf .latest/meta.conf ${CORE_PKG_PATH}/meta.conf
 	ln -sf .latest/meta.txz ${CORE_PKG_PATH}/meta.txz
 	ln -sf .latest/packagesite.txz ${CORE_PKG_PATH}/packagesite.txz
@@ -133,6 +133,9 @@ ensure_kernel_exists() {
 		echo ">>> ERROR: Kernel $1/boot/kernel.gz appears to be smaller than it should be: $KERNEL_SIZE"
 		print_error_pfS
 	fi
+echo "###### Copying and missing modules to kernel stage area ######"
+cp /boot/modules/*.ko /root/ahool/tmp/kernels/ahool/boot/kernel/
+kldxref /root/ahool/tmp/kernels/ahool/boot/kernel/
 }
 
 get_pkg_name() {
@@ -162,7 +165,7 @@ build_all_kernels() {
 		LOGFILE="${BUILDER_LOGS}/kernel.${KERNCONF}.${TARGET}.log"
 		echo ">>> Building $BUILD_KERNEL kernel."  | tee -a ${LOGFILE}
 
-		if [ -n "${NO_BUILDKERNEL}" -a -f "${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${KERNEL_NAME}).txz" ]; then
+		if [ -n "${NO_BUILDKERNEL}" -a -f "${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${KERNEL_NAME}).pkg" ]; then
 			echo ">>> NO_BUILDKERNEL set, skipping build" | tee -a ${LOGFILE}
 			continue
 		fi
@@ -198,7 +201,7 @@ install_default_kernel() {
 
 	# Copy kernel package to chroot, otherwise pkg won't find it to install
 	if ! pkg_chroot_add ${FINAL_CHROOT_DIR} kernel-${KERNEL_NAME}; then
-		echo ">>> ERROR: Error installing kernel package $(get_pkg_name kernel-${KERNEL_NAME}).txz" | tee -a ${LOGFILE}
+		echo ">>> ERROR: Error installing kernel package $(get_pkg_name kernel-${KERNEL_NAME}).pkg" | tee -a ${LOGFILE}
 		print_error_pfS
 	fi
 
@@ -211,15 +214,15 @@ install_default_kernel() {
 	fi
 	mkdir -p $FINAL_CHROOT_DIR/pkgs
 	if [ -z "${2}" -o -n "${INSTALL_EXTRA_KERNELS}" ]; then
-		cp ${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${KERNEL_NAME}).txz $FINAL_CHROOT_DIR/pkgs
+		cp ${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${KERNEL_NAME}).pkg $FINAL_CHROOT_DIR/pkgs
 		if [ -n "${INSTALL_EXTRA_KERNELS}" ]; then
 			for _EXTRA_KERNEL in $INSTALL_EXTRA_KERNELS; do
-				_EXTRA_KERNEL_PATH=${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${_EXTRA_KERNEL}).txz
+				_EXTRA_KERNEL_PATH=${CORE_PKG_ALL_PATH}/$(get_pkg_name kernel-${_EXTRA_KERNEL}).pkg
 				if [ -f "${_EXTRA_KERNEL_PATH}" ]; then
 					echo -n ". adding ${_EXTRA_KERNEL_PATH} on image /pkgs folder"
 					cp ${_EXTRA_KERNEL_PATH} $FINAL_CHROOT_DIR/pkgs
 				else
-					echo ">>> ERROR: Requested kernel $(get_pkg_name kernel-${_EXTRA_KERNEL}).txz was not found to be put on image /pkgs folder!"
+					echo ">>> ERROR: Requested kernel $(get_pkg_name kernel-${_EXTRA_KERNEL}).pkg was not found to be put on image /pkgs folder!"
 					print_error_pfS
 				fi
 			done
@@ -271,6 +274,7 @@ make_world() {
 		|| print_error_pfS
 
 	# Use the builder cross compiler from obj to produce the final binary.
+	cp /usr/bin/cc /root/ahool/tmp/obj/root/ahool/tmp/FreeBSD-src/amd64.amd64/tmp/usr/bin/ #Added by Fabricio to workaround missing cc (line below)
 	BUILD_CC="${MAKEOBJDIRPREFIX}${FREEBSD_SRC_DIR}/${TARGET}.${TARGET_ARCH}/tmp/usr/bin/cc"
 
 	[ -f "${BUILD_CC}" ] || print_error_pfS
@@ -280,28 +284,28 @@ make_world() {
 		|| mkdir -p ${STAGE_CHROOT_DIR}/usr/local/bin
 	makeargs="CC=${BUILD_CC} DESTDIR=${STAGE_CHROOT_DIR}"
 	echo ">>> Building and installing crypto tools and athstats for ${TARGET} architecture... (Starting - $(LC_ALL=C date))" | tee -a ${LOGFILE}
-	(script -aq $LOGFILE make -C ${FREEBSD_SRC_DIR}/tools/tools/crypto ${makeargs} clean all install || print_error_pfS;) | egrep '^>>>' | tee -a ${LOGFILE}
+#	(script -aq $LOGFILE make -C ${FREEBSD_SRC_DIR}/tools/tools/crypto ${makeargs} clean all install || print_error_pfS;) | egrep '^>>>' | tee -a ${LOGFILE}
 	# XXX FIX IT
-#	(script -aq $LOGFILE make -C ${FREEBSD_SRC_DIR}/tools/tools/ath/athstats ${makeargs} clean all install || print_error_pfS;) | egrep '^>>>' | tee -a ${LOGFILE}
+# (script -aq $LOGFILE make -C ${FREEBSD_SRC_DIR}/tools/tools/ath/athstats ${makeargs} clean all install || print_error_pfS;) | egrep '^>>>' | tee -a ${LOGFILE}
 	echo ">>> Building and installing crypto tools and athstats for ${TARGET} architecture... (Finished - $(LC_ALL=C date))" | tee -a ${LOGFILE}
 
-	if [ "${PRODUCT_NAME}" = "pfSense" -a -n "${GNID_REPO_BASE}" ]; then
-		echo ">>> Building gnid... " | tee -a ${LOGFILE}
-		(\
-			cd ${GNID_SRC_DIR} && \
-			make \
-				CC=${BUILD_CC} \
-				INCLUDE_DIR=${GNID_INCLUDE_DIR} \
-				LIBCRYPTO_DIR=${GNID_LIBCRYPTO_DIR} \
-			clean gnid \
-		) || print_error_pfS
-		install -o root -g wheel -m 0700 ${GNID_SRC_DIR}/gnid \
-			${STAGE_CHROOT_DIR}/usr/sbin \
-			|| print_error_pfS
-		install -o root -g wheel -m 0700 ${GNID_SRC_DIR}/gnid \
-			${INSTALLER_CHROOT_DIR}/usr/sbin \
-			|| print_error_pfS
-	fi
+	# if [ "${PRODUCT_NAME}" = "pfSense" -a -n "${GNID_REPO_BASE}" ]; then
+	# 	echo ">>> Building gnid... " | tee -a ${LOGFILE}
+	# 	(\
+	# 		cd ${GNID_SRC_DIR} && \
+	# 		make \
+	# 			CC=${BUILD_CC} \
+	# 			INCLUDE_DIR=${GNID_INCLUDE_DIR} \
+	# 			LIBCRYPTO_DIR=${GNID_LIBCRYPTO_DIR} \
+	# 		clean gnid \
+	# 	) || print_error_pfS
+	# 	install -o root -g wheel -m 0700 ${GNID_SRC_DIR}/gnid \
+	# 		${STAGE_CHROOT_DIR}/usr/sbin \
+	# 		|| print_error_pfS
+	# 	install -o root -g wheel -m 0700 ${GNID_SRC_DIR}/gnid \
+	# 		${INSTALLER_CHROOT_DIR}/usr/sbin \
+	# 		|| print_error_pfS
+	# fi
 
 	unset makeargs
 }
@@ -651,7 +655,6 @@ clone_to_staging_area() {
 	echo force > ${STAGE_CHROOT_DIR}/cf/conf/enableserial_force
 
 	core_pkg_create default-config-serial "" ${CORE_PKG_VERSION} ${STAGE_CHROOT_DIR}
-	core_pkg_create default-config "bhyve" ${CORE_PKG_VERSION} ${STAGE_CHROOT_DIR}
 
 	rm -f ${STAGE_CHROOT_DIR}/cf/conf/enableserial_force
 	rm -f ${STAGE_CHROOT_DIR}/cf/conf/config.xml
@@ -726,7 +729,7 @@ customize_stagearea_for_image() {
 	     "${_image_type}" = "memstickserial" -o \
 	     "${_image_type}" = "memstickadi" ]; then
 		mkdir -p ${FINAL_CHROOT_DIR}/pkgs
-		cp ${CORE_PKG_ALL_PATH}/*default-config*.txz ${FINAL_CHROOT_DIR}/pkgs
+		cp ${CORE_PKG_ALL_PATH}/*default-config*.pkg ${FINAL_CHROOT_DIR}/pkgs
 	fi
 
 	pkg_chroot_add ${FINAL_CHROOT_DIR} ${_default_config}
@@ -1008,7 +1011,8 @@ setup_pkg_repo() {
 	local _target_arch="${4}"
 	local _staging="${5}"
 	local _pkg_conf="${6}"
-	local _mirror_type="srv"
+	local _mirror_type="none"
+	local MIRROR_TYPE="none"
 	local _signature_type="fingerprints"
 
 	if [ -z "${_template}" -o ! -f "${_template}" ]; then
@@ -1094,7 +1098,7 @@ builder_setup() {
 			${PKG_REPO_PATH}
 	fi
 
-	pkg install ${PRODUCT_NAME}-builder
+	#pkg install ${PRODUCT_NAME}-builder
 }
 
 # Updates FreeBSD sources
@@ -1168,7 +1172,7 @@ pkg_chroot() {
 		_params="${_params} --config /tmp/pkg/pkg.conf "
 	fi
 	script -aq ${BUILDER_LOGS}/install_pkg_install_ports.txt \
-		chroot ${_root} pkg ${_params}$@ >/dev/null 2>&1
+		chroot ${_root} pkg ${_params}$@
 	local result=$?
 	rm -f ${_root}/etc/resolv.conf
 	/sbin/umount -f ${_root}/dev
@@ -1184,7 +1188,7 @@ pkg_chroot_add() {
 	fi
 
 	local _target="${1}"
-	local _pkg="$(get_pkg_name ${2}).txz"
+	local _pkg="$(get_pkg_name ${2}).pkg"
 
 	if [ ! -d "${_target}" ]; then
 		echo ">>> ERROR: Target dir ${_target} not found"
@@ -1367,7 +1371,7 @@ pkg_repo_rsync() {
 		# https://github.com/freebsd/pkg/issues/1364
 		#
 		if script -aq ${_logfile} pkg repo ${_real_repo_path}/ \
-		    signing_command: ${PKG_REPO_SIGNING_COMMAND} >/dev/null 2>&1; then
+		    signing_command: ${PKG_REPO_SIGNING_COMMAND} ; then
 			echo "Done!" | tee -a ${_logfile}
 		else
 			echo "Failed!" | tee -a ${_logfile}
@@ -1377,12 +1381,12 @@ pkg_repo_rsync() {
 
 		local _pkgfile="${_repo_path}/Latest/pkg.pkg"
 		if [ -e ${_pkgfile} ]; then
-			echo -n ">>> Signing Latest/pkg.pkg for bootstrapping... " | tee -a ${_logfile}
+			echo -n ">>> Signing Latest/pkg.pkg for bootstraping... " | tee -a ${_logfile}
 
-			if sha256 -q ${_pkgfile} | ${PKG_REPO_SIGNING_COMMAND} \
-			    > ${_pkgfile}.sig 2>/dev/null; then
+			if sha256 -q ${_pkgfile} | /usr/bin/tr -d '\n' | ${PKG_REPO_SIGNING_COMMAND} \
+			    > ${_pkgfile}.sig ; then
 				# XXX Temporary workaround to create link to pkg sig
-				[ -e ${_repo_path}/Latest/pkg.txz ] && \
+				[ -e ${_repo_path}/Latest/pkg.pkg ] && \
 					ln -sf pkg.pkg.sig ${_repo_path}/Latest/pkg.txz.sig
 				echo "Done!" | tee -a ${_logfile}
 			else
@@ -1581,24 +1585,30 @@ poudriere_rename_ports() {
 			  -e "/^MAINTAINER=/ s,^.*$,MAINTAINER=	${PRODUCT_EMAIL}," \
 			${_pdir}/${_pname}/Makefile ${_pdescr} ${_plist}
 
-		# PHP module is special
-		if echo "${_pname}" | grep -q "^php[0-9]*-${PRODUCT_NAME}-module"; then
-			local _product_capital=$(echo ${PRODUCT_NAME} | tr '[a-z]' '[A-Z]')
-			sed -i '' -e "s,PHP_PFSENSE,PHP_${_product_capital},g" \
-				  -e "s,PFSENSE_SHARED_LIBADD,${_product_capital}_SHARED_LIBADD,g" \
-				  -e "s,pfSense,${PRODUCT_NAME},g" \
-				  -e "s,pfSense.c,${PRODUCT_NAME}\.c,g" \
-				${_pdir}/${_pname}/files/config.m4
+			# PHP module is special
+				if echo "${_pname}" | grep -q "^php[0-9]*-${PRODUCT_NAME}-module"; then
+					local _product_capital=$(echo ${PRODUCT_NAME} | tr '[a-z]' '[A-Z]')
+					sed -i '' -e "s,PHP_PFSENSE,PHP_${_product_capital},g" \
+						  -e "s,PFSENSE_SHARED_LIBADD,${_product_capital}_SHARED_LIBADD,g" \
+						  -e "s,pfSense,${PRODUCT_NAME},g" \
+						  -e "s,pfSense_arginfo.h,${PRODUCT_NAME}_arginfo\.h,g" \
+						  -e "s,pfSense_private.h,${PRODUCT_NAME}_private\.h,g" \
+						  -e "s,pfSense.c,${PRODUCT_NAME}\.c,g" \
+						${_pdir}/${_pname}/files/config.m4
 
-			sed -i '' -e "s,COMPILE_DL_PFSENSE,COMPILE_DL_${_product_capital}," \
-				  -e "s,pfSense_module_entry,${PRODUCT_NAME}_module_entry,g" \
-				  -e "s,php_pfSense.h,php_${PRODUCT_NAME}\.h,g" \
-				  -e "/ZEND_GET_MODULE/ s,pfSense,${PRODUCT_NAME}," \
-				  -e "/PHP_PFSENSE_WORLD_EXTNAME/ s,pfSense,${PRODUCT_NAME}," \
-				${_pdir}/${_pname}/files/pfSense.c \
-				${_pdir}/${_pname}/files/dummynet.c \
-				${_pdir}/${_pname}/files/php_pfSense.h
-		fi
+					sed -i '' -e "s,COMPILE_DL_PFSENSE,COMPILE_DL_${_product_capital}," \
+						  -e "s,pfSense_module_entry,${PRODUCT_NAME}_module_entry,g" \
+						  -e "s,php_pfSense.h,php_${PRODUCT_NAME}\.h,g" \
+						  -e "s,pfSense_arginfo.h,${PRODUCT_NAME}_arginfo\.h,g" \
+						  -e "s,pfSense_private.h,${PRODUCT_NAME}_private\.h,g" \
+						  -e "/ZEND_GET_MODULE/ s,pfSense,${PRODUCT_NAME}," \
+						  -e "/PHP_PFSENSE_WORLD_EXTNAME/ s,pfSense,${PRODUCT_NAME}," \
+						${_pdir}/${_pname}/files/pfSense.c \
+						${_pdir}/${_pname}/files/pfSense_arginfo.h \
+						${_pdir}/${_pname}/files/pfSense.stub.php \
+						${_pdir}/${_pname}/files/pfSense_private.h \
+						${_pdir}/${_pname}/files/php_pfSense.h
+				fi
 
 		if [ -d ${_pdir}/${_pname}/files ]; then
 			for fd in $(find ${_pdir}/${_pname}/files -name '*pfSense*'); do
@@ -1728,7 +1738,7 @@ poudriere_init() {
 
 	# PARALLEL_JOBS us ncpu / 4 for best performance
 	local _parallel_jobs=$(sysctl -qn hw.ncpu)
-	_parallel_jobs=$((_parallel_jobs / 4))
+	_parallel_jobs=$((_parallel_jobs - 1))
 
 	echo ">>> Creating poudriere.conf" | tee -a ${LOGFILE}
 	cat <<EOF >/usr/local/etc/poudriere.conf
@@ -2029,9 +2039,7 @@ poudriere_bulk() {
 	cat <<EOF >>/usr/local/etc/poudriere.d/${POUDRIERE_PORTS_NAME}-make.conf
 
 PKG_REPO_BRANCH_DEVEL=${PKG_REPO_BRANCH_DEVEL}
-PKG_REPO_BRANCH_NEXT=${PKG_REPO_BRANCH_NEXT}
 PKG_REPO_BRANCH_RELEASE=${PKG_REPO_BRANCH_RELEASE}
-PKG_REPO_BRANCH_PREVIOUS=${PKG_REPO_BRANCH_PREVIOUS}
 PKG_REPO_SERVER_DEVEL=${PKG_REPO_SERVER_DEVEL}
 PKG_REPO_SERVER_RELEASE=${PKG_REPO_SERVER_RELEASE}
 POUDRIERE_PORTS_NAME=${POUDRIERE_PORTS_NAME}
@@ -2134,7 +2142,7 @@ EOF
 
 	if [ "${AWS}" = 1 ]; then
 		echo ">>> Run poudriere distclean to prune old distfiles..." | tee -a ${LOGFILE}
-		if ! poudriere distclean -f ${_bulk} -p ${POUDRIERE_PORTS_NAME} -n; then
+		if ! poudriere distclean -f ${_bulk} -p ${POUDRIERE_PORTS_NAME} -y; then
 			echo ">>> ERROR: Something went wrong..."
 			print_error_pfS
 		fi
